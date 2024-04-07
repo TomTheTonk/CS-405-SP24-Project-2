@@ -183,8 +183,8 @@ public class ContigousMemoryAllocator {
 			while(j < partList.size() && partList.get(j).isFreeOrNot()) {
 				
 				//merge j into i
-				int start_j = partList.get(i).getBase();
-				if(start_j == end_i +1) {
+				int start_j = partList.get(j).getBase();
+				if(start_j == end_i+1) {
 					part.setLength(part.getLength() + partList.get(j).getLength());
 					partList.remove(j);
 				} 
@@ -304,21 +304,21 @@ public class ContigousMemoryAllocator {
 					}
 					boolean memoryFlag = true;
 					boolean runFlag = true;
-					String processNum = "";
 					int check = 0;
 					int doneCount = 0;
 					while(memoryFlag != false){
-						System.out.print("\033[H\033[2J");  
-    					System.out.flush();  
-						memory.print_status();
+						System.out.print("\033[H\033[2J");
+						System.out.flush();
 						System.out.println("--------------------------------------------------");
+						memory.print_status();
 						System.out.println("ID: " + processID);
 						System.out.println("Time: " + processTime);
 						System.out.println("Size: " + processSize);
 						System.out.println("Status: " + processStatus);
-						System.out.println("Status: 0 is not allco to memory yet, 1 is in memory, 2 out of memory");
+						System.out.println("Status: 0 process is not allco to memory yet, 1 process is in memory, 2 process is finished");
+						System.out.println("--------------------------------------------------");
 						for(int i = 0; i < processID.size(); i++){
-							processNum = "P" + (i + 1);
+							
 							
 
 							//Add to memory
@@ -345,7 +345,7 @@ public class ContigousMemoryAllocator {
 									
 								}
 								else {
-									System.out.println(processNum + " was not able to be fitted");
+									System.out.println(processID.get(i) + " was not able to be fitted");
 									//set the process as running in memory in the array
 								
 								}	
@@ -353,7 +353,7 @@ public class ContigousMemoryAllocator {
 							//Release
 							else if(processStatus.get(i) == 1 && processTime.get(i) == 0){
 								// check if alloc in some way then check if process has time left if not then release
-								check = memory.release(processNum);
+								check = memory.release(processID.get(i));
 								//set process as done so we dont run through it again
 								if(check == -1){
 									System.out.println("Failed Search");
@@ -362,10 +362,10 @@ public class ContigousMemoryAllocator {
 								processStatus.set(i, 2);
 								doneCount++;
 								}
-								//set the process as running in memory in the array
+								
 						
 							}
-							//Tick memory thats in memory down one
+							//Tick process thats in memory down one
 							else if(processStatus.get(i) == 1 && processTime.get(i) != 0){
 								//System.out.println("Ticked Time Down");
 								//remove one from the time on the process
@@ -375,6 +375,17 @@ public class ContigousMemoryAllocator {
 							
 						}
 							if(doneCount == processID.size()){
+								memory.merge_holes();
+								System.out.print("\033[H\033[2J");
+								System.out.flush();
+								System.out.println("--------------------------------------------------");
+								memory.print_status();
+								System.out.println("ID: " + processID);
+								System.out.println("Time: " + processTime);
+								System.out.println("Size: " + processSize);
+								System.out.println("Status: " + processStatus);
+								System.out.println("Status: 0 process is not allco to memory yet, 1 process is in memory, 2 process is finished");
+								System.out.println("--------------------------------------------------");
 								memoryFlag = false;
 							}
 							try {
