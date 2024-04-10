@@ -25,15 +25,6 @@ public class ContigousMemoryAllocator {
 		this.partList.add(new Partition(0, size)); // add the first hole, which is the whole memory at start up
 	}
 
-	// System.out.printlns the list of available commands
-	public void print_help_message() {
-		// TODO: add code below
-		System.out.println("RQ <process> <size> to request memory of size for the process");
-		System.out.println("RL <process> to release the memory of the process");
-		System.out.println("STAT to show the memory allocation status");
-		System.out.println("EXIT to exit");
-		System.out.println("HELP to show the availiable commands");
-	}
 
 	// System.out.printlns the allocation map (free + allocated) in ascending order
 	// of base addresses
@@ -217,7 +208,24 @@ public class ContigousMemoryAllocator {
 		} // end first while loop
 
 	}
-	private static boolean help = false; 
+	/* """
+	Prints all the info during memory allocation
+
+    :param memory: instance of memory
+    :type: ContigousMemoryAllocator
+	:param MEMORY_MAX: Max amount of memory in the instance of memory
+    :type: int
+	:param processSize: list of all the process's sizes
+    :type: list of integers
+	:param processID: list of all the process's IDs
+    :type: list of integers
+	:param processTime: list of all the process's time to run
+    :type: list of integers
+	:param processStatus: list of all the processes status in the memory at that moment
+    :type: list of integers
+    :return: prints the memory at that moment and all relevent info
+    :rtype: none
+    """ */
 	public static void print_run(ContigousMemoryAllocator memory, int MEMORY_MAX, List<Integer> processSize,
 			List<String> processID, List<Integer> processTime, List<Integer> processStatus) {
 		System.out.print("\033[H\033[2J");
@@ -241,19 +249,23 @@ public class ContigousMemoryAllocator {
 		System.out.println("Control C to pause the simulation");
 		System.out.println("--------------------------------------------------");
 	}
-	
+	//Flag for when control C is pressed to pause the program
+	private static boolean pause = false; 
 	public static void main(String[] args) {
+		//Base whole memory size
 		int MEMORY_MAX = 1024;
+		//Max size of processes
 		int PROC_SIZE_MAX = 256;
+		//Number of processes
 		int NUM_PROC = 10;
+		//Max time of process
 		int MAX_PROC_TIME = 1000;
-		Scanner scanner;
-		boolean flag = true;
-		String[] dataLine;
-		String data;
-		int algorithim;
+		Scanner scanner = new Scanner(System.in); // Create a Scanner object
+		//Flag for the main menu to run
+		boolean mainMenuFlag = true;
 
-		while (flag != false) {
+		//Main Menu Loop
+		while (mainMenuFlag != false) {
 			System.out.println("--------------------------------------------------");
 			System.out.println("Select an option");
 			System.out.println("1. Input a File");
@@ -265,14 +277,31 @@ public class ContigousMemoryAllocator {
 			int input = scanner.nextInt();
 			// Switch Case to pick which option from menu
 			switch (input) {
+				
+					/* """
+					Case 1: Reads a file given and sets the parameters for running the memory and creating process
+					from the ones given in the file
+
+					:param data: line of the file
+					:type: String
+					:param dataLine: array of the split words in the line taken from the file
+					:type: array
+					:param fileDir: String holding the directory given to read from
+					:type: String
+					:param file: file Object given from the directory entered
+					:type: File
+					:return: Updates all the memory and process values such as memory max with the values from the file given
+					:rtype: int
+					""" */
 				case 1:
+					String[] dataLine;
+					String data;
 					// Enter demo file
 					try {
 						System.out.println("Type file's directory");
-						scanner = new Scanner(System.in); // Create a Scanner object
 						String fileDir = scanner.nextLine();
-						File myObj = new File(fileDir);
-						Scanner myReader = new Scanner(myObj);
+						File file = new File(fileDir);
+						Scanner myReader = new Scanner(file);
 						dataLine = null;
 						data = "";
 						while (myReader.hasNextLine()) {
@@ -295,40 +324,62 @@ public class ContigousMemoryAllocator {
 					}
 					break;
 
+
+					/* """
+					Case 2: Creates the Processes and their related sizes and times. Then runs the memory allocotor using the algorithm given by the user.
+					If the user inputs Control C then the program pauses and waits for input to resume or exit back to menu
+
+					:return: Outputs to terminal the simulation of memory allocation
+					:rtype: none
+					""" */
 				case 2:
+
 					// Create Processes
+					//Would be its own method however java doesnt allow multiple return methods and the work arounds arent worth the work
+
 					Random rand = new Random();
-					// List<Integer> processInfo = new ArrayList<Integer> ();
+				
+					//Arrays holding the info of all the processes
 					List<String> processID = new ArrayList<String>();
 					List<Integer> processSize = new ArrayList<Integer>();
 					List<Integer> processTime = new ArrayList<Integer>();
-					List<Integer> processTimeSave = new ArrayList<Integer>();
+					// Process status index 0 Size index 1 Time left 2 a three integer switch where 0
+					// is not in memory but not done 1 is in memory and running 2 is finished
 					List<Integer> processStatus = new ArrayList<Integer>();
+					//Arrays to save the instance of processTime and processStatus so the simulation can be rerun on the same processes
+					List<Integer> processTimeSave = new ArrayList<Integer>();
 					List<Integer> processReset = new ArrayList<Integer>();
-					// Dictionary<String, List<Integer>> dict= new Hashtable<>();
+					//Instance of memory
 					ContigousMemoryAllocator memory = new ContigousMemoryAllocator(MEMORY_MAX);
+					//String holder the processID to be added to processID
 					String processString = "";
-					// Processes
+
+					//For the number of proceses created a process and save the data in arrays of intergers
 					for (int i = 1; i <= NUM_PROC; i++) {
 						processSize.add(rand.nextInt(PROC_SIZE_MAX));
 						processTime.add(rand.nextInt(MAX_PROC_TIME));
 						processStatus.add(0);
 						processString = "P" + i;
 						processID.add(processString);
+						//Add the info from the lists so that if the user chooses to rerun the program the info will be saved and can be loaded
 						processTimeSave.add(processTime.get(i - 1));
 						processReset.add(processStatus.get(i - 1));
 
 					}
-					
 					System.out.println("\nProcesses created " + processID);
-					boolean runFlag = true;
+					
 
+
+					//Signal Checks for Control C if detected then sets pause to true to pause the program
 					Signal.handle(new Signal("INT"), new SignalHandler() {
 						public void handle(Signal sig) {
-							help = true;
+							//set static variable to true
+							pause = true;
 						}
 					});
 
+					//Outer While Loop this is so if the user chooses they can rerun on another anlogrithm if they so choose
+					boolean runFlag = true;
 					while (runFlag != false) {
 						// System.out.println(memory.free_memory());
 
@@ -337,8 +388,10 @@ public class ContigousMemoryAllocator {
 						System.out.println("First Fit: 0");
 						System.out.println("Best Fit: 1");
 						System.out.println("Worst Fit: 2");
-						scanner = new Scanner(System.in);
+						//Take the input given for the algorithm
+						int algorithim;
 						algorithim = scanner.nextInt();
+						//Print out the choice to the user choose
 						switch (algorithim) {
 							case 0:
 								System.out.println("First Fit selected");
@@ -351,26 +404,30 @@ public class ContigousMemoryAllocator {
 								break;
 							// System.out.println("Not Valid Input");
 						}
-
+						//Inner while loop flag
 						boolean memoryFlag = true;
-						// boolean runFlag = true;
+						//check for the output of the algorthim given to see if there is space
 						int check = 0;
+						//Count how many processes finished their time in memory
 						int doneCount = 0;
 
+						//Inner Loop
 						while (memoryFlag != false) {
-							
+							//print the state of memory
 							print_run(memory, MEMORY_MAX, processSize, processID, processTime, processStatus);
-
+							
+							//Run through the processes either alloc them, release or tick down their time
 							for (int i = 0; i < processID.size(); i++) {
 
-								// Add to memory
-								// Process info index 0 Size index 1 Time left 2 a three integer switch where 0
+								// Add to memory if status is 0 and there is time left for the process
+								// Process status index 0 Size index 1 Time left 2 a three integer switch where 0
 								// is not in memory but not done 1 is in memory and running 2 is finished
 								//
 								if (processStatus.get(i) == 0 && processTime.get(i) != 0) {
-									// TODO: Get output from first fit to check if space or not then print error if
+									//Get output from first fit to check if space or not then print error if
 									// so
-
+									
+									//Pick the algorithim choosen by the user earlier
 									switch (algorithim) {
 										case 0:
 											// Firstfit
@@ -384,32 +441,35 @@ public class ContigousMemoryAllocator {
 											break;
 										// System.out.println("Not Valid Input");
 									}
-									
+									//Get output from first fit to check if space or not then print error
 									if (check > 0) {
 										processStatus.set(i, 1);
 
 									} else {
+										//Print error that theres no room for the process
 										System.out.println(processID.get(i) + " was not able to be fitted with size "
 												+ processSize.get(i) + " KB");
 										// set the process as running in memory in the array
 
 									}
 								}
-								// Release
+								// Release the process if the process status is 1 or in memory and theres no time left for the process 
 								else if (processStatus.get(i) == 1 && processTime.get(i) == 0) {
-									// check if alloc in some way then check if process has time left if not then
-									// release
+
 									check = memory.release(processID.get(i));
-									// set process as done so we dont run through it again
+									//If process wasnt found print the error
 									if (check == -1) {
 										System.out.println("Failed Search");
 									} else {
+										//If found then update the process in the array
+										// set process as done so we dont run through it again
 										processStatus.set(i, 2);
+										//Increment processes done
 										doneCount++;
 									}
 
 								}
-								// Tick process thats in memory down one
+								// Tick processes thats in memory time down 1 ms if the status is 1 or in memory and there is time left for the process in memory
 								else if (processStatus.get(i) == 1 && processTime.get(i) != 0) {
 									// System.out.println("Ticked Time Down");
 									// remove 1000 ms or 1 sec from the time on the process
@@ -417,13 +477,14 @@ public class ContigousMemoryAllocator {
 								}
 								
 							}
+							//If amount of processes out of memory = the amount of processes print the final instance of memory after merging the last holes
 							if (doneCount == processID.size()) {
 								memory.merge_holes();
 								print_run(memory, MEMORY_MAX, processSize, processID, processTime, processStatus);
 
+								//Ask if the user wasnts to rerun on the same processes on another algorthim or exit
 								System.out
 										.println("Input Rerun to run on another fit algorithim with the same values else enter anything: ");
-								scanner = new Scanner(System.in);
 								String rerun = "";
 								rerun = scanner.nextLine();
 								if (rerun.equalsIgnoreCase("Rerun") == true) {
@@ -441,22 +502,24 @@ public class ContigousMemoryAllocator {
 
 							}
 							
-								// should be 1 millis to be accuracte but that is just hard on the eyes and
-								// makes it a hard to watch
+								// should be 1 millis to be accurate but that is just too hard on the eyes 
 							try {
 								Thread.sleep(100);
 							} catch (InterruptedException e) {
-								// TODO Auto-generated catch block
+								
 								e.printStackTrace();
 							}
-							if(help == true){
+							// If control C is detected then pause the while loop 
+							if(pause == true){
 								String pauseMenu = "";
+								//Ask the user to input resume or exit
 								System.out.println("\nEnter Resume to resume");
 								System.out.println("Enter Exit to exit");
-								scanner = new Scanner(System.in);
 								pauseMenu = scanner.nextLine();
+								//If the input is resume resume the memory program
 								if (pauseMenu.equalsIgnoreCase("Resume") == true) {
-									help = false;
+									pause = false;
+									//If input is exit then return to menu
 								} else if (pauseMenu.equalsIgnoreCase("Exit") == true) {
 									runFlag = false;
 									memoryFlag = false;
@@ -465,9 +528,9 @@ public class ContigousMemoryAllocator {
 						}
 					}
 					break;
-
+				//Exit whole program case
 				case 3:
-					flag = false;
+					mainMenuFlag = false;
 					break;
 
 				/*
